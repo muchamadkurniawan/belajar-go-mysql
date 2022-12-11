@@ -2,6 +2,7 @@ package belajar_go_mysql
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 	"time"
@@ -35,7 +36,8 @@ func TestQueryComplex(t *testing.T) {
 	defer db.Close()
 
 	for rows.Next() {
-		var id, name, email string
+		var id, name string
+		var email sql.NullString
 		var balance int32
 		var rating float64
 		var birthData, createAt time.Time
@@ -47,11 +49,86 @@ func TestQueryComplex(t *testing.T) {
 		fmt.Println("===================")
 		fmt.Println("id : ", id)
 		fmt.Println("name :", name)
-		fmt.Println("email : ", email)
+		if email.Valid {
+			fmt.Println("email : ", email.String)
+		}
 		fmt.Println("balance :", balance)
 		fmt.Println("rating :", rating)
 		fmt.Println("birth data :", birthData)
 		fmt.Println("married : ", maried)
 		fmt.Println("dibuat pada :", createAt)
 	}
+}
+
+func TestSQLinjection(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "admin"
+	password := "kurniawan"
+
+	query := "select username from user where username = '" + username +
+		"' and passwod = '" + password + "'limit 1"
+	rows, err := db.QueryContext(ctx, query)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	if rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("sukses login ", username)
+	} else {
+		fmt.Println("gagal login")
+	}
+}
+
+func TestSQLinjectionSafe(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+
+	username := "admin"
+	password := "kurniawan"
+
+	query := "select username from user where username = ? and passwod = ? limit 1"
+	rows, err := db.QueryContext(ctx, query, username, password)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	if rows.Next() {
+		var username string
+		err := rows.Scan(&username)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("sukses login ", username)
+	} else {
+		fmt.Println("gagal login")
+	}
+}
+
+func TestExecSqlSafe(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	id := "member4"
+	name := "kurkur"
+	ctx := context.Background()
+	query := "insert into member (id, name) values (?,?)"
+	_, err := db.ExecContext(ctx, query, id, name)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Success insert new data member")
 }
