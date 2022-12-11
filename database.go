@@ -6,7 +6,8 @@ import (
 )
 
 func GetConnection() *sql.DB {
-	db, err := sql.Open("mysql", "root:@tcp(localhost:3306)/belajargolang")
+	db, err := sql.Open(
+		"mysql", "root:kurniawan@tcp(localhost:3306)/belajarsqlgolang?parseTime=true")
 	if err != nil {
 		panic(err)
 	}
@@ -14,6 +15,5 @@ func GetConnection() *sql.DB {
 	db.SetMaxOpenConns(100)
 	db.SetConnMaxIdleTime(5 * time.Minute)
 	db.SetConnMaxLifetime(60 * time.Minute)
-
 	return db
 }
