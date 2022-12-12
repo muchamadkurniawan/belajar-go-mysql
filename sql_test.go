@@ -132,3 +132,23 @@ func TestExecSqlSafe(t *testing.T) {
 
 	fmt.Println("Success insert new data member")
 }
+
+func TestAutoIncrement(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+	email := "kurniawan@gmail.com"
+	comment := "hallo ini comment pertama"
+
+	query := "insert into comment(email, comment) values (?,?)"
+	result, err := db.ExecContext(ctx, query, email, comment)
+	if err != nil {
+		panic(err)
+	}
+	insertID, err := result.LastInsertId()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("success insert new comment by", insertID)
+}
