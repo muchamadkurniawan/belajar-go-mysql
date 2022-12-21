@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -151,4 +152,72 @@ func TestAutoIncrement(t *testing.T) {
 		panic(err)
 	}
 	fmt.Println("success insert new comment by", insertID)
+}
+
+func TestPrepareStetment(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+	//email := "kurniawan@gmail.com"
+	//comment := "hallo ini comment kedua"
+
+	query := "insert into comment(email, comment) values (?,?)"
+
+	stetment, err := db.PrepareContext(ctx, query)
+	if err != nil {
+		panic(nil)
+	}
+
+	for i := 1; i <= 10; i++ {
+		//fmt.Println("iiiii :", i)
+		email := "kurniawan" + strconv.Itoa(i) + "@gmail.com"
+		comment := "commentar ke-" + strconv.Itoa(i)
+		result, err := stetment.ExecContext(ctx, email, comment)
+		if err != nil {
+			panic(err)
+		}
+		id, err := result.LastInsertId()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("last id adalah ", id)
+
+	}
+
+	defer stetment.Close()
+}
+
+func TestSQLTransaction(t *testing.T) {
+	db := GetConnection()
+	defer db.Close()
+
+	ctx := context.Background()
+	tx, err := db.Begin()
+	if err != nil {
+		panic(nil)
+	}
+
+	//do transaction
+	query := "insert into comment(email, comment) values (?,?)"
+	for i := 1; i <= 10; i++ {
+		//fmt.Println("iiiii :", i)
+		email := "kurniawan" + strconv.Itoa(i) + "@gmail.com"
+		comment := "commentar ke-" + strconv.Itoa(i)
+		result, err := tx.ExecContext(ctx, query, email, comment)
+		if err != nil {
+			panic(err)
+		}
+		id, err := result.LastInsertId()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("last id adalah ", id)
+
+	}
+	//err = tx.Rollback() // untuk rollback
+	err = tx.Commit() //untuk commit
+	if err != nil {
+		panic(nil)
+	}
 }
